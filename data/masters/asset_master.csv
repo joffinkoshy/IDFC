@@ -1,0 +1,6 @@
+asset_id,asset_type,make,model,min_hp,max_hp,min_cost,max_cost
+101,Car,Toyota,Camry,150,250,2000000,3000000
+102,Car,Honda,City,100,180,1500000,2500000
+103,SUV,Mahindra,XUV500,150,200,1800000,2800000
+104,Truck,Tata,Prima,250,400,3500000,5000000
+105,Car,Maruti,Suzuki,80,120,1000000,1800000
