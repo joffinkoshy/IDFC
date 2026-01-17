@@ -5,8 +5,11 @@ Handles image normalization including resizing and color correction
 import cv2
 import os
 
-RAW_DIR = r"C:\Users\HP\PycharmProjects\IDFC\data\raw"
-PROCESSED_DIR = r"C:\Users\HP\PycharmProjects\IDFC\data\processed"
+# Resolve paths relative to repo root
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+RAW_DIR = os.path.join(BASE_DIR, "data", "train")
+PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
 
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 
@@ -19,11 +22,15 @@ for filename in os.listdir(RAW_DIR):
             print(f"❌ Could not read {filename}")
             continue
 
+        # BGR -> RGB
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+        # Resize (DPI-equivalent)
         img = cv2.resize(
-            img, None,
-            fx=1.5, fy=1.5,
+            img,
+            None,
+            fx=1.5,
+            fy=1.5,
             interpolation=cv2.INTER_CUBIC
         )
 
@@ -32,4 +39,4 @@ for filename in os.listdir(RAW_DIR):
 
         print(f"✅ Processed {filename}")
 
-print("🎉 Done!")
+print("🎉 Preprocessing completed.")
