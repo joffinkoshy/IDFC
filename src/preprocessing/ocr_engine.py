@@ -1,38 +1,37 @@
-"""
-OCR Engine Module
-Handles OCR processing using PaddleOCR
-"""
-import os
 from paddleocr import PaddleOCR
 
-# ---------- PATH SETUP ----------
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
+class OCREngine:
+    def __init__(self):
+        self.ocr = PaddleOCR(
+            use_textline_orientation=True,  # Updated parameter name
+            lang="en"
+        )
 
-# ---------- OCR INITIALIZATION ----------
-ocr = PaddleOCR(
-    use_angle_cls=True,
-    lang='en'  # later we will add multilingual
-)
+    def run(self, image):
+        raw_results = self.ocr.ocr(image)
+        ocr_outputs = []
 
-# ---------- RUN OCR ----------
-for filename in os.listdir(PROCESSED_DIR):
+        if raw_results is None:
+            return ocr_outputs
 
-    if filename.lower().endswith((".jpg", ".jpeg", ".png")):
-        image_path = os.path.join(PROCESSED_DIR, filename)
+        # Handle new PaddleOCR v5 format
+        if isinstance(raw_results, list) and len(raw_results) > 0:
+            # Get the first result (single image case)
+            result = raw_results[0]
 
-        print("\n==============================")
-        print(f"📄 OCR for image: {filename}")
-        print("==============================")
+            # Extract text detection results
+            if 'rec_texts' in result and 'rec_polys' in result and 'rec_scores' in result:
+                rec_texts = result['rec_texts']
+                rec_polys = result['rec_polys']
+                rec_scores = result['rec_scores']
 
-        result = ocr.ocr(image_path, cls=True)
+                # Combine the results
+                for text, bbox, conf in zip(rec_texts, rec_polys, rec_scores):
+                    if text and len(bbox) > 0:
+                        ocr_outputs.append({
+                            "text": str(text).strip(),
+                            "bbox": bbox.tolist() if hasattr(bbox, 'tolist') else bbox,
+                            "confidence": float(conf)
+                        })
 
-        if result is None:
-            print("❌ No text detected")
-            continue
-
-        for line in result[0]:
-            text = line[1][0]
-            confidence = line[1][1]
-
-            print(f"TEXT: {text} | CONF: {confidence:.2f}")
+        return ocr_outputs

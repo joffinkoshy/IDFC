@@ -1,42 +1,27 @@
-"""
-Image Normalizer Module
-Handles image normalization including resizing and color correction
-"""
 import cv2
-import os
+import numpy as np
 
-# Resolve paths relative to repo root
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+class ImageNormalizer:
+    def run(self, image):
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-RAW_DIR = os.path.join(BASE_DIR, "data", "train")
-PROCESSED_DIR = os.path.join(BASE_DIR, "data", "processed")
+        # Adaptive contrast enhancement
+        clahe = cv2.createCLAHE(
+            clipLimit=2.0,
+            tileGridSize=(8, 8)
+        )
+        enhanced = clahe.apply(gray)
 
-os.makedirs(PROCESSED_DIR, exist_ok=True)
-
-for filename in os.listdir(RAW_DIR):
-    if filename.lower().endswith((".jpg", ".jpeg", ".png")):
-        raw_path = os.path.join(RAW_DIR, filename)
-
-        img = cv2.imread(raw_path)
-        if img is None:
-            print(f"❌ Could not read {filename}")
-            continue
-
-        # BGR -> RGB
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        # Resize (DPI-equivalent)
-        img = cv2.resize(
-            img,
-            None,
-            fx=1.5,
-            fy=1.5,
-            interpolation=cv2.INTER_CUBIC
+        # Light denoising (safe for text)
+        denoised = cv2.fastNlMeansDenoising(
+            enhanced,
+            h=10,
+            templateWindowSize=7,
+            searchWindowSize=21
         )
 
-        out_path = os.path.join(PROCESSED_DIR, filename)
-        cv2.imwrite(out_path, cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        # Convert back to 3-channel (OCR expects this)
+        final = cv2.cvtColor(denoised, cv2.COLOR_GRAY2BGR)
 
-        print(f"✅ Processed {filename}")
-
-print("🎉 Preprocessing completed.")
+        return final
