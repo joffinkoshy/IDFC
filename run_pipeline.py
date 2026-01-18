@@ -2,6 +2,7 @@ import sys
 import json
 from src.preprocessing.preprocess import Preprocessor
 from src.extraction.dealer_name import DealerNameResolver
+from src.extraction.model_name import ModelNameResolver
 from src.layout.line_grouping import group_tokens_into_lines
 from src.layout.block_grouping import group_lines_into_blocks
 from src.layout.geometry import quad_to_rect
@@ -9,6 +10,7 @@ from src.layout.geometry import quad_to_rect
 def main(image_path):
     preprocessor = Preprocessor()
     dealer_resolver = DealerNameResolver()
+    model_resolver = ModelNameResolver()
 
     # Step 1: Preprocess
     result = preprocessor.run(image_path)
@@ -27,14 +29,18 @@ def main(image_path):
     image_height = result["image"].shape[0] if result["image"] is not None else 1000
     dealer_result = dealer_resolver.resolve(blocks, image_height)
 
-    # Step 4: Final debug-friendly output
+    # Step 4: Model name extraction
+    model_result = model_resolver.resolve(blocks, image_height)
+
+    # Step 5: Final debug-friendly output
     output = {
         "status": "ok",
         "image": image_path,
         "num_ocr_tokens": len(ocr_tokens),
         "num_lines": len(lines),
         "num_blocks": len(blocks),
-        "dealer_name_result": dealer_result
+        "dealer_name_result": dealer_result,
+        "model_name_result": model_result
     }
 
     print(json.dumps(output, indent=2))
