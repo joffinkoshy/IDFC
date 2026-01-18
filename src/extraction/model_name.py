@@ -46,6 +46,8 @@ class ModelNameResolver:
                 confidence=c["confidence"],
                 page_height=page_height,
                 block_id=c["block_id"],
+                line_id=c["line_id"],
+                raw_line=c["raw_line"],
                 blocks=blocks
             )
             scored.append({**c, "score": score})
@@ -145,6 +147,13 @@ class ModelNameResolver:
 
         text = re.sub(r'\s+', ' ', text).strip()
 
+        # Reject if no digits after cleanup
+        if not re.search(r'\d', text):
+            return None
+
+        # Canonical formatting - remove brand prefixes
+        text = re.sub(r'^(SWARAJ|MAHINDRA|MF|JD)\s+', '', text)
+
         # STRICT model core patterns
         patterns = [
             r'\b(?:MF|SWARAJ|MAHINDRA|JD)?\s*\d{3,4}\s*[A-Z]{1,3}\b'
@@ -184,12 +193,16 @@ class ModelNameResolver:
 
     # ------------------------------------------------------------------
 
-    def _score_candidate(self, text, bbox, confidence, page_height, block_id, blocks):
+    def _score_candidate(self, text, bbox, confidence, page_height, block_id, line_id, raw_line, blocks):
         score = 0.0
 
         # Table context
         if self._is_table_like_block(blocks[block_id]):
             score += 0.30
+
+        # Strong boost if extracted from table row
+        if self._extract_model_from_table_row(raw_line):
+            score += 0.15
 
         # Alphanumeric density
         density = sum(c.isalnum() for c in text) / max(len(text), 1)

@@ -2,12 +2,25 @@ import re
 
 KEYWORDS = [
     "tractor", "tractors", "motors", "agency", "agencies",
-    "implements", "equipment", "enterprises"
+    "implements", "equipment", "enterprises","automobiles",
+    "automobiles", "auto", "car", "vehicles", "commercial vehicle", "pre-owned",
+    "showroom","tractor", "farm implements", "agri equipment", "agriculture", "farm equipment", "implements",
+    "electronics", "appliances", "consumer durable", "furniture", "retail","dealer", "dealers", "agency", "agencies",
+    "distributors", "distributor", "showroom",
+    "authorized", "authorized dealer","store", "outlet", "retail", "sales",
+    "motors", "enterprises", "services",
+    "pvt", "ltd", "private limited", "co.",
+    "corp", "corporation", "ventures", "automotive"
+
+
+
+
+
 ]
 
 EXCLUDE_PATTERNS = [
     r"gst", r"phone", r"mob", r"email", r"date",
-    r"quotation", r"invoice", r"bank"
+    r"quotation", r"invoice", r"bank","branch","ifsc"
 ]
 
 
