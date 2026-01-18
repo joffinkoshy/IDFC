@@ -23,7 +23,9 @@ def main(image_path):
     blocks = group_lines_into_blocks(lines)
 
     # Step 3: Dealer name extraction
-    dealer_result = dealer_resolver.resolve(blocks)
+    # Get page height from the image
+    image_height = result["image"].shape[0] if result["image"] is not None else 1000
+    dealer_result = dealer_resolver.resolve(blocks, image_height)
 
     # Step 4: Final debug-friendly output
     output = {
