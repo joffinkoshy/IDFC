@@ -2,6 +2,7 @@ import cv2
 from .image_normalizer import ImageNormalizer
 from .ocr_engine import OCREngine
 
+
 class Preprocessor:
     def __init__(self):
         self.normalizer = ImageNormalizer()
@@ -14,7 +15,4 @@ class Preprocessor:
 
         ocr_results = self.ocr_engine.run(norm_image)
 
-        return {
-            "image": norm_image,
-            "ocr": ocr_results
-        }
+        return {"image": norm_image, "ocr": ocr_results}

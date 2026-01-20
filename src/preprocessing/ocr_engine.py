@@ -1,37 +1,28 @@
 from paddleocr import PaddleOCR
 
+
 class OCREngine:
     def __init__(self):
-        self.ocr = PaddleOCR(
-            use_textline_orientation=True,  # Updated parameter name
-            lang="en"
-        )
+        self.ocr = PaddleOCR(use_angle_cls=True, lang="en")  # SAFE & STABLE
 
     def run(self, image):
+        """
+        image: numpy array (H, W, C)
+        returns: list of dicts with text, bbox, confidence
+        """
         raw_results = self.ocr.ocr(image)
+
         ocr_outputs = []
 
-        if raw_results is None:
+        if not raw_results:
             return ocr_outputs
 
-        # Handle new PaddleOCR v5 format
-        if isinstance(raw_results, list) and len(raw_results) > 0:
-            # Get the first result (single image case)
-            result = raw_results[0]
+        # Single image case → raw_results[0]
+        for line in raw_results[0]:
+            bbox = line[0]  # 4-point polygon
+            text, conf = line[1]  # (text, confidence)
 
-            # Extract text detection results
-            if 'rec_texts' in result and 'rec_polys' in result and 'rec_scores' in result:
-                rec_texts = result['rec_texts']
-                rec_polys = result['rec_polys']
-                rec_scores = result['rec_scores']
-
-                # Combine the results
-                for text, bbox, conf in zip(rec_texts, rec_polys, rec_scores):
-                    if text and len(bbox) > 0:
-                        ocr_outputs.append({
-                            "text": str(text).strip(),
-                            "bbox": bbox.tolist() if hasattr(bbox, 'tolist') else bbox,
-                            "confidence": float(conf)
-                        })
+            if text and bbox:
+                ocr_outputs.append({"text": text.strip(), "bbox": bbox, "confidence": float(conf)})
 
         return ocr_outputs

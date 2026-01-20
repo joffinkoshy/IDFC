@@ -1,27 +1,60 @@
 import re
 
 KEYWORDS = [
-    "tractor", "tractors", "motors", "agency", "agencies",
-    "implements", "equipment", "enterprises","automobiles",
-    "automobiles", "auto", "car", "vehicles", "commercial vehicle", "pre-owned",
-    "showroom","tractor", "farm implements", "agri equipment", "agriculture", "farm equipment", "implements",
-    "electronics", "appliances", "consumer durable", "furniture", "retail","dealer", "dealers", "agency", "agencies",
-    "distributors", "distributor", "showroom",
-    "authorized", "authorized dealer","store", "outlet", "retail", "sales",
-    "motors", "enterprises", "services",
-    "pvt", "ltd", "private limited", "co.",
-    "corp", "corporation", "ventures", "automotive"
-
-
-
-
-
+    "tractor",
+    "tractors",
+    "motors",
+    "agency",
+    "agencies",
+    "implements",
+    "equipment",
+    "enterprises",
+    "automobiles",
+    "automobiles",
+    "auto",
+    "car",
+    "vehicles",
+    "commercial vehicle",
+    "pre-owned",
+    "showroom",
+    "tractor",
+    "farm implements",
+    "agri equipment",
+    "agriculture",
+    "farm equipment",
+    "implements",
+    "electronics",
+    "appliances",
+    "consumer durable",
+    "furniture",
+    "retail",
+    "dealer",
+    "dealers",
+    "agency",
+    "agencies",
+    "distributors",
+    "distributor",
+    "showroom",
+    "authorized",
+    "authorized dealer",
+    "store",
+    "outlet",
+    "retail",
+    "sales",
+    "motors",
+    "enterprises",
+    "services",
+    "pvt",
+    "ltd",
+    "private limited",
+    "co.",
+    "corp",
+    "corporation",
+    "ventures",
+    "automotive",
 ]
 
-EXCLUDE_PATTERNS = [
-    r"gst", r"phone", r"mob", r"email", r"date",
-    r"quotation", r"invoice", r"bank","branch","ifsc"
-]
+EXCLUDE_PATTERNS = [r"gst", r"phone", r"mob", r"email", r"date", r"quotation", r"invoice", r"bank", "branch", "ifsc"]
 
 
 class DealerNameResolver:
@@ -38,45 +71,25 @@ class DealerNameResolver:
                 text = " ".join(tok["text"] for tok in line).strip()
 
                 # Get bbox from first token (approximation)
-                bbox = line[0]["bbox"] if line else [[0,0],[1,1],[1,1],[0,0]]
+                bbox = line[0]["bbox"] if line else [[0, 0], [1, 1], [1, 1], [0, 0]]
                 conf = max(tok.get("confidence", 0.0) for tok in line) if line else 0.0
 
                 if not self._is_candidate(text):
                     continue
 
-                score = self._score_candidate(
-                    text=text,
-                    bbox=bbox,
-                    confidence=conf,
-                    page_height=page_height
-                )
+                score = self._score_candidate(text=text, bbox=bbox, confidence=conf, page_height=page_height)
 
-                candidates.append({
-                    "text": text,
-                    "score": score
-                })
+                candidates.append({"text": text, "score": score})
 
         if not candidates:
-            return {
-                "dealer_name": None,
-                "confidence": 0.0,
-                "reason": "no_candidates"
-            }
+            return {"dealer_name": None, "confidence": 0.0, "reason": "no_candidates"}
 
         best = max(candidates, key=lambda x: x["score"])
 
         if best["score"] < self.score_threshold:
-            return {
-                "dealer_name": None,
-                "confidence": round(best["score"], 2),
-                "reason": "low_confidence"
-            }
+            return {"dealer_name": None, "confidence": round(best["score"], 2), "reason": "low_confidence"}
 
-        return {
-            "dealer_name": best["text"],
-            "confidence": round(best["score"], 2),
-            "reason": "heuristic_match"
-        }
+        return {"dealer_name": best["text"], "confidence": round(best["score"], 2), "reason": "heuristic_match"}
 
     def _is_candidate(self, text):
         text_l = text.lower()

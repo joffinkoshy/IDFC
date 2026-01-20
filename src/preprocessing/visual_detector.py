@@ -9,10 +9,8 @@ MODEL_PATH = os.path.join(BASE_DIR, "models", "signature_stamp.pt")
 
 model = YOLO(MODEL_PATH)
 
-CLASS_MAP = {
-    0: "signature",
-    1: "stamp"
-}
+CLASS_MAP = {0: "signature", 1: "stamp"}
+
 
 def detect_visuals(image_name):
     img_path = os.path.join(PROCESSED_DIR, image_name)
@@ -30,10 +28,6 @@ def detect_visuals(image_name):
         conf = float(box.conf[0])
         x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-        detections.append({
-            "type": CLASS_MAP[cls_id],
-            "confidence": conf,
-            "bbox": [x1, y1, x2, y2]
-        })
+        detections.append({"type": CLASS_MAP[cls_id], "confidence": conf, "bbox": [x1, y1, x2, y2]})
 
     return detections

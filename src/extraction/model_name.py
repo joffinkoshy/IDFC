@@ -1,10 +1,7 @@
 import re
 
 # Model-specific keywords
-MODEL_KEYWORDS = [
-    "model", "hp", "h.p", "cyl", "tractor",
-    "xt", "di", "fe", "eco", "dx", "sx", "wd"
-]
+MODEL_KEYWORDS = ["model", "hp", "h.p", "cyl", "tractor", "xt", "di", "fe", "eco", "dx", "sx", "wd"]
 
 # OCR cleanup
 OCR_CORRECTIONS = {
@@ -17,10 +14,17 @@ OCR_CORRECTIONS = {
 
 # Known brands
 BRANDS = [
-    "swaraj", "mahindra", "john deere",
-    "sonalika", "eicher", "escorts",
-    "new holland", "kubota",
-    "massey ferguson", "mf", "jd"
+    "swaraj",
+    "mahindra",
+    "john deere",
+    "sonalika",
+    "eicher",
+    "escorts",
+    "new holland",
+    "kubota",
+    "massey ferguson",
+    "mf",
+    "jd",
 ]
 
 
@@ -32,11 +36,7 @@ class ModelNameResolver:
         candidates = self._generate_candidates(blocks, page_height)
 
         if not candidates:
-            return {
-                "model_name": None,
-                "confidence": 0.0,
-                "reason": "no_candidates"
-            }
+            return {"model_name": None, "confidence": 0.0, "reason": "no_candidates"}
 
         scored = []
         for c in candidates:
@@ -48,24 +48,20 @@ class ModelNameResolver:
                 block_id=c["block_id"],
                 line_id=c["line_id"],
                 raw_line=c["raw_line"],
-                blocks=blocks
+                blocks=blocks,
             )
             scored.append({**c, "score": score})
 
         best = max(scored, key=lambda x: x["score"])
 
         if best["score"] < self.score_threshold:
-            return {
-                "model_name": None,
-                "confidence": round(best["score"], 2),
-                "reason": "low_confidence"
-            }
+            return {"model_name": None, "confidence": round(best["score"], 2), "reason": "low_confidence"}
 
         return {
             "model_name": best["text"],
             "confidence": round(best["score"], 2),
             "reason": "heuristic_match",
-            "original_text": best["raw_line"]
+            "original_text": best["raw_line"],
         }
 
     # ------------------------------------------------------------------
@@ -94,14 +90,16 @@ class ModelNameResolver:
                 bbox = line[0]["bbox"]
                 conf = max(tok.get("confidence", 0.0) for tok in line)
 
-                candidates.append({
-                    "text": core,
-                    "raw_line": raw_text,
-                    "bbox": bbox,
-                    "confidence": conf,
-                    "block_id": block_id,
-                    "line_id": line_id
-                })
+                candidates.append(
+                    {
+                        "text": core,
+                        "raw_line": raw_text,
+                        "bbox": bbox,
+                        "confidence": conf,
+                        "block_id": block_id,
+                        "line_id": line_id,
+                    }
+                )
 
         return candidates
 
@@ -110,10 +108,7 @@ class ModelNameResolver:
     def _extract_model_from_table_row(self, text):
         text = text.upper()
 
-        patterns = [
-            r'\b(?:SWARAJ|MAHINDRA|MF|JD)\s*\d{3,4}\s*[A-Z]{1,3}\b',
-            r'\b\d{3,4}\s*[A-Z]{1,3}\b'
-        ]
+        patterns = [r"\b(?:SWARAJ|MAHINDRA|MF|JD)\s*\d{3,4}\s*[A-Z]{1,3}\b", r"\b\d{3,4}\s*[A-Z]{1,3}\b"]
 
         for p in patterns:
             m = re.search(p, text)
@@ -131,33 +126,24 @@ class ModelNameResolver:
         text = text.upper()
 
         # Kill obvious non-model words
-        blacklist = [
-            "ADDRESS", "IFSC", "BANK", "DATE", "FOR",
-            "TOTAL", "AMOUNT", "HDFC", "GST"
-        ]
+        blacklist = ["ADDRESS", "IFSC", "BANK", "DATE", "FOR", "TOTAL", "AMOUNT", "HDFC", "GST"]
         if any(b in text for b in blacklist):
             return None
 
         # Remove config noise
-        text = re.sub(
-            r'\b(HP|WD|CYLINDER|CATG|TRACTOR|PTO|TYRE|SIZE|X)\b',
-            '',
-            text
-        )
+        text = re.sub(r"\b(HP|WD|CYLINDER|CATG|TRACTOR|PTO|TYRE|SIZE|X)\b", "", text)
 
-        text = re.sub(r'\s+', ' ', text).strip()
+        text = re.sub(r"\s+", " ", text).strip()
 
         # Reject if no digits after cleanup
-        if not re.search(r'\d', text):
+        if not re.search(r"\d", text):
             return None
 
         # Canonical formatting - remove brand prefixes
-        text = re.sub(r'^(SWARAJ|MAHINDRA|MF|JD)\s+', '', text)
+        text = re.sub(r"^(SWARAJ|MAHINDRA|MF|JD)\s+", "", text)
 
         # STRICT model core patterns
-        patterns = [
-            r'\b(?:MF|SWARAJ|MAHINDRA|JD)?\s*\d{3,4}\s*[A-Z]{1,3}\b'
-        ]
+        patterns = [r"\b(?:MF|SWARAJ|MAHINDRA|JD)?\s*\d{3,4}\s*[A-Z]{1,3}\b"]
 
         for p in patterns:
             m = re.search(p, text)
@@ -171,9 +157,17 @@ class ModelNameResolver:
     def _is_excluded_line(self, text):
         text_l = text.lower()
         blacklist = [
-            "gst", "invoice", "quotation", "total",
-            "amount", "price", "bank", "signature",
-            "customer", "party", "terms"
+            "gst",
+            "invoice",
+            "quotation",
+            "total",
+            "amount",
+            "price",
+            "bank",
+            "signature",
+            "customer",
+            "party",
+            "terms",
         ]
         return any(b in text_l for b in blacklist)
 

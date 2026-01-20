@@ -8,5 +8,5 @@ def quad_to_rect(bbox):
         "y_max": max(ys),
         "x_center": sum(xs) / 4,
         "y_center": sum(ys) / 4,
-        "height": max(ys) - min(ys)
+        "height": max(ys) - min(ys),
     }

@@ -6,9 +6,4 @@ class Candidate:
         self.source = source  # e.g. "ocr", "regex", "heuristic"
 
     def to_dict(self):
-        return {
-            "value": self.value,
-            "confidence": self.confidence,
-            "source": self.source,
-            "bbox": self.bbox
-        }
+        return {"value": self.value, "confidence": self.confidence, "source": self.source, "bbox": self.bbox}

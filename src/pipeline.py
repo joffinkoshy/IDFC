@@ -1,5 +1,6 @@
 from src.preprocessing.preprocess import Preprocessor
 
+
 class Pipeline:
     def __init__(self):
         self.preprocessor = Preprocessor()
@@ -9,9 +10,4 @@ class Pipeline:
 
         ocr_tokens = preprocess_result["ocr"]
 
-        return {
-            "status": "ok",
-            "num_ocr_tokens": len(ocr_tokens),
-            "sample_tokens": ocr_tokens[:10]
-        }
-
+        return {"status": "ok", "num_ocr_tokens": len(ocr_tokens), "sample_tokens": ocr_tokens[:10]}

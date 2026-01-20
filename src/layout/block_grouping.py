@@ -1,16 +1,10 @@
-BLOCK_BREAK_KEYWORDS = [
-    "S.N.",
-    "Particulars",
-    "TRACTOR",
-    "Accessories",
-    "Total",
-    "special Note",
-    "Customer Signature"
-]
+BLOCK_BREAK_KEYWORDS = ["S.N.", "Particulars", "TRACTOR", "Accessories", "Total", "special Note", "Customer Signature"]
+
 
 def contains_block_break(line):
     text = " ".join(t["text"].lower() for t in line)
     return any(k.lower() in text for k in BLOCK_BREAK_KEYWORDS)
+
 
 def group_lines_into_blocks(lines):
     blocks = []
