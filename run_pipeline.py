@@ -6,11 +6,15 @@ from src.extraction.model_name import ModelNameResolver
 from src.layout.line_grouping import group_tokens_into_lines
 from src.layout.block_grouping import group_lines_into_blocks
 from src.layout.geometry import quad_to_rect
+from src.extraction.hp import HPResolver
 
 def main(image_path):
     preprocessor = Preprocessor()
     dealer_resolver = DealerNameResolver()
     model_resolver = ModelNameResolver()
+    hp_resolver = HPResolver()
+
+
 
     # Step 1: Preprocess
     result = preprocessor.run(image_path)
@@ -32,7 +36,14 @@ def main(image_path):
     # Step 4: Model name extraction
     model_result = model_resolver.resolve(blocks, image_height)
 
-    # Step 5: Final debug-friendly output
+    # Step 5: HP extraction
+    hp_result = hp_resolver.resolve(
+        blocks=blocks,
+        page_width=result["image"].shape[1] if result["image"] is not None else 800,
+        page_height=image_height
+    )
+
+    # Step 6: Final debug-friendly output
     output = {
         "status": "ok",
         "image": image_path,
@@ -40,7 +51,8 @@ def main(image_path):
         "num_lines": len(lines),
         "num_blocks": len(blocks),
         "dealer_name_result": dealer_result,
-        "model_name_result": model_result
+        "model_name_result": model_result,
+        "hp_result": hp_result
     }
 
     print(json.dumps(output, indent=2))
