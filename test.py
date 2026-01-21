@@ -1,92 +1,58 @@
+import torch
 from transformers import AutoProcessor, AutoModelForVision2Seq
 from PIL import Image
-import torch
 
-# Use a more accessible model for testing
-# MODEL_NAME = "openbmb/MiniCPM-V-2_6"
 MODEL_NAME = "Qwen/Qwen2.5-VL-3B-Instruct"
 
-
-
+# -----------------------------
+# Load processor and model
+# -----------------------------
 processor = AutoProcessor.from_pretrained(MODEL_NAME)
+
 model = AutoModelForVision2Seq.from_pretrained(
     MODEL_NAME,
-    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+    torch_dtype=torch.float16,   # GPU-friendly
     device_map="auto"
 ).eval()
 
-SYSTEM_PROMPT = """You are a vision-language document extraction system used for Indian financial documents.
-The document image may contain multiple languages (English, Hindi, Marathi, Gujarati).
-Do not guess or infer missing values. Return null if unclear.
-"""
+# -----------------------------
+# Prompt (your field logic)
+# -----------------------------
+PROMPT = """
+You are a vision-language document extraction system used for Indian financial documents.
 
-TASK_PROMPT = """You are a vision-language model extracting structured information from an Indian tractor quotation or invoice.
+The document may be multilingual (English, Hindi, Marathi, Gujarati) and may contain printed and handwritten text.
 
-The document may be multilingual (English, Hindi, Marathi, Gujarati), may mix printed and handwritten text, and may contain tables.
-
-Extract the following fields based on their visual position, surrounding context, and meaning.
-
---------------------------------------------------
-FIELD CHARACTERISTICS AND LOCATION GUIDANCE
---------------------------------------------------
+FIELD CHARACTERISTICS:
 
 1. Dealer Name
-- Usually located in the top section of the invoice
-- Often centered or slightly left-aligned near the top
-- Appears in a larger or bolder font than most other text
-- Represents the business issuing the quotation
-- May appear alongside address or contact details
-- Do NOT confuse with:
-  - Tractor brand names (e.g., Mahindra, Sonalika, Kubota, Eicher)
-  - Bank or financier names (e.g., IDFC FIRST BANK), which usually appear mid-page or near financing terms
+- Located near the top of the document
+- Larger or bolder than most text
+- Issuing business (not bank, not tractor brand)
 
 2. Model Name
-- Refers to the tractor model being quoted for purchase
-- Commonly found in the main body of the document
-- Often appears:
-  - Inside a table under columns like “Particulars”, “Items”, or “Model”
-  - In the first or selected row of a table
-- Usually an alphanumeric string and may include variant details (e.g., DI, XP, Plus, 2WD, 4WD)
-- May be handwritten or printed
-- If multiple models are listed, choose the one that is priced or clearly selected
+- Tractor model being quoted
+- Appears in tables or main body
+- Alphanumeric (e.g., 575 DI XP Plus)
 
-3. Horse Power (HP)
-- Numeric value associated with the tractor model
-- Usually appears close to the model name
-- May be on the same line, in brackets, or in a nearby column
-- Can appear under a column such as “HP” or “Capacity”
-- Typically written as a number followed by “HP”
-- If multiple HP values exist, choose the one corresponding to the quoted tractor
-- Return only the numeric value
+3. Horse Power
+- Numeric value followed by HP
+- Appears near model name or under HP/Capacity column
+- Return only the number
 
 4. Asset Cost
-- Refers to the final total price of the tractor
-- Typically the largest numeric amount in the document
-- Often located:
-  - In the rightmost column of a table
-  - Near the bottom section of the invoice
-- Commonly associated with labels such as:
-  - “Total”
-  - “Grand Total”
-  - “Net Amount”
-  - “After Discount”
-  - “Final Amount”
-- Ignore individual tax components (CGST, SGST) or accessory prices unless included in the final total
-- Return digits only, without commas or currency symbols
+- Final total amount
+- Largest number on the page
+- Near bottom or right side
+- Ignore taxes unless included in final total
+- Return digits only
 
---------------------------------------------------
-EXTRACTION RULES
---------------------------------------------------
-- Extract values only if they are explicitly visible in the image
-- Do not infer or guess missing information
-- If a field is unclear or ambiguous, return null
-- Do not include explanations or additional text
+RULES:
+- Do not guess
+- If unclear, return null
+- Output only JSON
 
---------------------------------------------------
-OUTPUT FORMAT (STRICT)
---------------------------------------------------
-Return the result strictly as JSON:
-
+OUTPUT FORMAT:
 {
   "dealer_name": "...",
   "model_name": "...",
@@ -95,23 +61,33 @@ Return the result strictly as JSON:
 }
 """
 
-def extract_fields(image_path):
+# -----------------------------
+# Extraction function
+# -----------------------------
+def extract_fields(image_path: str) -> str:
     image = Image.open(image_path).convert("RGB")
 
     inputs = processor(
         images=image,
-        text=SYSTEM_PROMPT + "\n" + TASK_PROMPT,
+        text=PROMPT,
         return_tensors="pt"
-    ).to(model.device)
+    )
+
+    inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
     with torch.no_grad():
-        output = model.generate(**inputs, max_new_tokens=256)
+        output = model.generate(
+            **inputs,
+            max_new_tokens=256,
+            do_sample=False
+        )
 
     return processor.decode(output[0], skip_special_tokens=True)
 
-# Example
-
-
+# -----------------------------
+# Run example
+# -----------------------------
 if __name__ == "__main__":
-    img_path = "/Users/joffinkoshy/Desktop/IDFC/data/train/172655019_3_pg11.png"  # change this
+    img_path = "/path/to/invoice.png"
+    print("Running Qwen2.5-VL inference...")
     print(extract_fields(img_path))
